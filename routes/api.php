@@ -14,3 +14,4 @@ Route::get('/greet', function () {
 
 // Threads Routes
 Route::post('/threads/get-user', [ThreadsController::class, 'getUser'])->name('threads.getUser');
+Route::post('/threads/post-thread', [ThreadsController::class, 'postThread'])->name('threads.postThread');
