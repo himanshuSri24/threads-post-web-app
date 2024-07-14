@@ -1,18 +1,20 @@
 import { useContext } from "react";
 import { ThreadsContext } from "../providers/ContextProvider";
+import { PostData } from "../App";
 
 interface ViewPostProps {
-    description: string | null;
+    newPostData: PostData;
+    onPostChange: () => void;
 }
 
 const ViewPost = (props: ViewPostProps) => {
-    const { description } = props;
+    const { newPostData, onPostChange } = props;
     const { threadsData } = useContext(ThreadsContext);
 
     return (
         <div className="flex justify-center items-center h-full bg-gray-500">
-            <div className="min-w-[300px] py-10 px-4 w-full aspect-video bg-slate-100 m-16 rounded-lg">
-                <div className="flex gap-4 h-full">
+            <div className="min-w-[300px] py-10 px-4 w-full min-h-[300px] bg-slate-100 m-16 rounded-lg">
+                <div className="flex gap-4 h-full min-h-[300px]">
                     <img
                         src={threadsData.profilePicture ?? ""}
                         alt="User Image"
@@ -23,18 +25,35 @@ const ViewPost = (props: ViewPostProps) => {
                             {threadsData.userName}
                         </p>
                         <p className="text-gray-600 break-all">
-                            {description && description.length !== 0 ? (
-                                description.length > 500 ? (
+                            {newPostData.text &&
+                            newPostData.text.length !== 0 ? (
+                                newPostData.text.length > 500 ? (
                                     <span>
-                                        {description.substring(0, 500)}...
+                                        {newPostData.text.substring(0, 500)}...
                                     </span>
                                 ) : (
-                                    description
+                                    newPostData.text
                                 )
                             ) : (
                                 "Start a thread..."
                             )}
                         </p>
+                        {newPostData.media_type === "IMAGE" &&
+                            newPostData.media_url !== null && (
+                                <div className="flex justify-start gap-4 mb-4 border-2 relative border-black rounded-lg w-max">
+                                    <p
+                                        className="text-2xl font-bold absolute right-2 text-red-700 cursor-pointer"
+                                        onClick={() => onPostChange()}
+                                    >
+                                        X
+                                    </p>
+                                    <img
+                                        src={newPostData.media_url?.[0] ?? ""}
+                                        alt="Media Preview"
+                                        className="w-full h-full max-h-[300px]" // 16:9 Aspect Ratio
+                                    />
+                                </div>
+                            )}
                     </div>
                 </div>
                 <div className="flex justify-between items-center ml-4">

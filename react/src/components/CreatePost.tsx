@@ -1,9 +1,13 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect } from "react";
 import { ThreadsContext } from "../providers/ContextProvider";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axiosInstance from "../utils/AxiosConfig";
+import { storage } from "../utils/FirebaseConfig";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { v4 as uuidv4 } from "uuid";
+import { PostData } from "../App";
 
 const schema = z.object({
     description: z
@@ -14,27 +18,14 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 interface CreatePostProps {
-    onDescriptionChange: (description: string | null) => void;
-}
-
-interface PostData {
-    text: string | null;
-    is_carousel_item: boolean;
-    image_url: string | null;
-    media_type: string;
-    video_url: string | null;
+    onPostChange: (postData: PostData) => void;
+    newPostData: PostData;
+    mediaUpload: File | null;
+    setMediaUpload: (mediaUpload: File | null) => void;
 }
 
 const CreatePost = (props: CreatePostProps) => {
-    const [newPostData, setNewPostData] = useState<PostData>({
-        text: "",
-        is_carousel_item: false,
-        image_url: "",
-        media_type: "TEXT",
-        video_url: "",
-    });
-
-    const { onDescriptionChange } = props;
+    const { onPostChange, newPostData, mediaUpload, setMediaUpload } = props;
     const { threadsData } = useContext(ThreadsContext);
     const {
         control,
@@ -48,30 +39,65 @@ const CreatePost = (props: CreatePostProps) => {
     const onSubmit = async (data: FormData) => {
         console.log(data.description);
         try {
-            await axiosInstance.post("/api/threads/post-thread", {
-                ...newPostData,
-                text: data.description,
-                access_token: threadsData.accessToken,
-                user_id: threadsData.userId,
-            });
+            const response = await axiosInstance.post(
+                "/api/threads/post-thread",
+                {
+                    ...newPostData,
+                    media_url: newPostData.media_url?.[0] ?? null,
+                    text: data.description,
+                    access_token: threadsData.accessToken,
+                    user_id: threadsData.userId,
+                }
+            );
 
-            // clear the description field
-            setNewPostData({
-                ...newPostData,
+            console.log(response.data.id);
+
+            onPostChange({
                 text: "",
                 is_carousel_item: false,
-                image_url: "",
                 media_type: "TEXT",
-                video_url: "",
+                media_url: null,
             });
+            setMediaUpload(null);
             reset();
-            onDescriptionChange(null);
             alert("Posted Successfully");
         } catch (error) {
             console.log(error);
             alert("Error Posting");
         }
     };
+
+    useEffect(() => {
+        if (mediaUpload !== null) {
+            const uploadImageAndSetUrl = async () => {
+                try {
+                    const fileRef = ref(
+                        storage,
+                        `media/${mediaUpload.name} - ${uuidv4()}`
+                    );
+                    const snapshot = await uploadBytes(fileRef, mediaUpload);
+
+                    const downloadURL = await getDownloadURL(snapshot.ref);
+                    console.log(downloadURL);
+
+                    const newPostData = { ...props.newPostData };
+                    onPostChange({
+                        ...newPostData,
+                        media_url: [downloadURL],
+                        media_type: mediaUpload.type.includes("image")
+                            ? "IMAGE"
+                            : "VIDEO",
+                    });
+
+                    setMediaUpload(null);
+                } catch (error) {
+                    console.error("Error uploading file:", error);
+                }
+            };
+
+            uploadImageAndSetUrl();
+        }
+    }, [mediaUpload, onPostChange, props.newPostData, setMediaUpload]);
 
     return (
         <div className="m-2">
@@ -103,11 +129,10 @@ const CreatePost = (props: CreatePostProps) => {
                                 }`}
                                 onChange={(e) => {
                                     field.onChange(e);
-                                    setNewPostData({
+                                    onPostChange({
                                         ...newPostData,
                                         text: e.target.value,
                                     });
-                                    onDescriptionChange(e.target.value);
                                 }}
                             />
                         )}
@@ -120,15 +145,40 @@ const CreatePost = (props: CreatePostProps) => {
                 </div>
 
                 {/* TODO: Media */}
-                {/* <div className="flex justify-start gap-4 mb-4">
-                    <div>Media</div>
-                    <div>Images</div>
-                    <div>Videos</div>
-                    <div>GIF</div>
-                </div> */}
+                <div
+                    className={`flex justify-start gap-4 mb-4 ${
+                        mediaUpload !== null ? "cursor-not-allowed" : ""
+                    }`}
+                >
+                    {/* Hidden file input */}
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                            const mediaToUpload = e.target.files?.[0] ?? null;
+                            console.log(mediaToUpload, "mediaToUpload");
+                            setMediaUpload(mediaToUpload);
+                            e.target.value = "";
+                        }}
+                        style={{ display: "none" }}
+                        id="upload-image-input"
+                    />
+                    {/* Button to trigger file input */}
+                    <label
+                        htmlFor="upload-image-input"
+                        className={`border-2 border-black font-bold py-2 px-4 rounded-lg  ${
+                            newPostData.media_url !== null
+                                ? "cursor-not-allowed bg-gray-400 text-gray-800"
+                                : "cursor-pointer bg-blue-200"
+                        }`}
+                    >
+                        {newPostData.media_url !== null
+                            ? "Image Uploaded"
+                            : "Upload Image"}
+                    </label>
+                </div>
 
                 {/* TODO: Location */}
-
                 {/* TODO: Repeat Post */}
 
                 <div className="flex justify-start">
