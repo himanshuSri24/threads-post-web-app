@@ -37,21 +37,22 @@ export const App = () => {
         };
 
         greet();
-        greet();
     }, []);
 
     return (
-        <div className="xl:flex xl:justify-center h-screen">
-            <div className="flex justify-center w-full xl:w-3/5 bg-gray-300 p-4 xl:p-10">
-                <div className="m-2 xl:m-4 border w-full border-black rounded-sm xl:rounded-xl">
-                    <CreatePost />
+        <>
+            <div className="xl:flex xl:justify-center h-screen">
+                <div className="flex justify-center w-full xl:w-3/5 bg-gray-300 p-4 xl:p-10">
+                    <div className="m-2 xl:m-4 border w-full border-black rounded-sm xl:rounded-xl">
+                        <CreatePost />
+                    </div>
+                </div>
+                <div className="flex justify-center w-full xl:w-2/5 bg-gray-100 p-4 xl:p-10">
+                    <div className="m-2 xl:m-4 border w-full border-black rounded-sm xl:rounded-xl">
+                        <ViewPost />
+                    </div>
                 </div>
             </div>
-            <div className="flex justify-center w-full xl:w-2/5 bg-gray-100 p-4 xl:p-10">
-                <div className="m-2 xl:m-4 border w-full border-black rounded-sm xl:rounded-xl">
-                    <ViewPost />
-                </div>
-            </div>
-        </div>
+        </>
     );
 };
