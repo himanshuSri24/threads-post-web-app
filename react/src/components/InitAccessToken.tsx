@@ -11,16 +11,19 @@ const InitAccessToken = () => {
 
     const { threadsData, setThreadsData } = useContext(ThreadsContext);
 
+    // handle connecting an account
     const onConnectAccount = async () => {
         if (accessToken !== "") {
             try {
                 setIsLoading(true);
+                // call the API to get the user data
                 const response = await axiosInstance.post(
                     "/api/threads/get-user",
                     {
                         access_token: accessToken,
                     }
                 );
+                // set the user data in the context
                 setThreadsData({
                     userName: response.data.username,
                     accessToken: accessToken,
@@ -42,6 +45,7 @@ const InitAccessToken = () => {
     };
 
     const onDisconnectAccount = () => {
+        // set the user data in the context to null to disconnect the account
         setThreadsData({
             userName: null,
             accessToken: null,

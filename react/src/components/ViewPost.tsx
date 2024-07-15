@@ -40,6 +40,7 @@ const ViewPost = (props: ViewPostProps) => {
                         </p>
                         {newPostData.media !== null && (
                             <div className="flex justify-start ml-4 items-center gap-10 lg:max-w-[400px] overflow-x-auto">
+                                {/* View all the media in the post */}
                                 {newPostData.media.map((media, idx) => (
                                     <div
                                         className="flex justify-start gap-4 mb-4 border-2 relative min-w-[200px] border-black rounded-lg flex-shrink-0"

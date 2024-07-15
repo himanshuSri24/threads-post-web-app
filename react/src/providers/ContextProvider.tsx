@@ -1,5 +1,6 @@
 import { createContext, useState } from "react";
 
+// Interfaces
 interface IUser {
     userName: string | null;
     accessToken: string | null;
@@ -12,6 +13,7 @@ interface IThreadsContext {
     setThreadsData: (data: IUser) => void;
 }
 
+// Context Provider
 export const ThreadsContext = createContext<IThreadsContext>({
     threadsData: {
         userName: null,
@@ -27,6 +29,7 @@ export const ThreadsContextProvider = ({
 }: {
     children: React.ReactNode;
 }) => {
+    // default state
     const [threadsData, setThreadsData] = useState<IUser>({
         userName: null,
         accessToken: null,
@@ -40,5 +43,3 @@ export const ThreadsContextProvider = ({
         </ThreadsContext.Provider>
     );
 };
-
-// export const useUserContextProvider = () => useContext(UserContext);

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class ThreadsController extends Controller
 {
+    // return user data
     public function getUser(Request $request)
     {
         $accessToken = $request->input('access_token');
@@ -19,6 +20,7 @@ class ThreadsController extends Controller
         return response()->json($userData);
     }
 
+    // create a single post object
     public function createSinglePost($access_token, $user_id, $text, $media_type, $media_url) {
 
         // https://graph.threads.net/v1.0/{{threads-user-id}}/threads?media_type=TEXT&text=Test-001
@@ -44,6 +46,7 @@ class ThreadsController extends Controller
         return $threadData;
     }
 
+    // creates a post on Threads
     public function createPost(Request $request) {
         $access_token = $request->input('access_token');
         $user_id = $request->input('user_id');
@@ -56,6 +59,7 @@ class ThreadsController extends Controller
         return response()->json($final_data);
     }
 
+    // creates a carousel container
     public function createCarouselContainer(Request $request) {
         $access_token = $request->input('access_token');
         $user_id = $request->input('user_id');
@@ -74,6 +78,7 @@ class ThreadsController extends Controller
         return response()->json($threadData);
     }
 
+    // create a single carousel post object
     public function createSingleCarouselPost($access_token, $user_id, $media_type, $media_url) {
 
         // https://graph.threads.net/v1.0/{{threads-user-id}}/threads?is_carousel_item=true&media_type=TEXT&text=Test-001
@@ -95,6 +100,7 @@ class ThreadsController extends Controller
         return $threadData;
     }
 
+    // create a post object
     public function createPostObject(Request $request)
     {
         $access_token = $request->input('access_token');

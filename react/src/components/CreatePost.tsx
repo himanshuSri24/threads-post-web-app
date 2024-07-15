@@ -30,6 +30,8 @@ const CreatePost = (props: CreatePostProps) => {
     const { threadsData } = useContext(ThreadsContext);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isPosting, setIsPosting] = useState<boolean>(false);
+
+    // zod validation schema + react-hook-form
     const {
         control,
         handleSubmit,
@@ -76,6 +78,7 @@ const CreatePost = (props: CreatePostProps) => {
 
                 const carouselPostIDsCommaSeperated = carouselPostIDs.join(",");
 
+                // call the API to create the carousel container
                 const responseCreateContainer = await axiosInstance.post(
                     "/api/threads/create-carousel-container",
                     {
@@ -89,6 +92,7 @@ const CreatePost = (props: CreatePostProps) => {
 
                 const carouselPostID = responseCreateContainer.data.id;
 
+                // call the API to create the post
                 const responseCreatePost = await axiosInstance.post(
                     "/api/threads/create-post",
                     {
@@ -100,6 +104,7 @@ const CreatePost = (props: CreatePostProps) => {
 
                 console.log("Response Created : ", responseCreatePost.data);
 
+                // update the post data to empty
                 onPostChange({
                     text: "",
                     is_carousel_item: false,
@@ -118,6 +123,7 @@ const CreatePost = (props: CreatePostProps) => {
             // Single Image / No Images
             try {
                 console.log(newPostData.media);
+                // call the API to create the post object
                 const response = await axiosInstance.post(
                     "/api/threads/create-post-object",
                     {
@@ -132,6 +138,7 @@ const CreatePost = (props: CreatePostProps) => {
 
                 console.log(response.data.id);
 
+                // call the API to create the post
                 const responseCreatePost = await axiosInstance.post(
                     "/api/threads/create-post",
                     {
@@ -143,6 +150,7 @@ const CreatePost = (props: CreatePostProps) => {
 
                 console.log("Response Created : ", responseCreatePost.data);
 
+                // update the post data to empty
                 onPostChange({
                     text: "",
                     is_carousel_item: false,
@@ -162,9 +170,12 @@ const CreatePost = (props: CreatePostProps) => {
 
     useEffect(() => {
         if (mediaUpload !== null) {
+            // upload the media and set the url in the post data
             const uploadMediaAndSetUrl = async () => {
                 try {
+                    // set the loading state
                     setIsLoading(true);
+                    // upload the media to Firebase Storage
                     const fileRef = ref(
                         storage,
                         `media/${mediaUpload.name} - ${uuidv4()}`
@@ -174,6 +185,7 @@ const CreatePost = (props: CreatePostProps) => {
                     const downloadURL = await getDownloadURL(snapshot.ref);
                     console.log(downloadURL);
 
+                    // update the post data with the new media
                     const newPostData = { ...props.newPostData };
                     const newMedia = newPostData.media
                         ? [...newPostData.media]
@@ -188,6 +200,8 @@ const CreatePost = (props: CreatePostProps) => {
                         ...newPostData,
                         media: newMedia,
                     });
+
+                    // reset the media upload state
                     setMediaUpload(null);
                 } catch (error) {
                     console.error("Error uploading file:", error);
@@ -218,6 +232,7 @@ const CreatePost = (props: CreatePostProps) => {
                     <p className="text-lg font-bold mb-4">
                         Description: ( 500 characters max )
                     </p>
+                    {/* zod validation for the description field */}
                     <Controller
                         name="description"
                         control={control}
@@ -246,7 +261,6 @@ const CreatePost = (props: CreatePostProps) => {
                     )}
                 </div>
 
-                {/* TODO: Media */}
                 <div
                     className={`flex justify-start gap-4 mb-4 ${
                         mediaUpload !== null ? "cursor-not-allowed" : ""
