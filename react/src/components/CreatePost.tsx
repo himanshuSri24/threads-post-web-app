@@ -91,7 +91,6 @@ const CreatePost = (props: CreatePostProps) => {
                             ? "IMAGE"
                             : "VIDEO",
                     });
-
                     setMediaUpload(null);
                 } catch (error) {
                     console.error("Error uploading file:", error);

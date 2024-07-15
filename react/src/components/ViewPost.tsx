@@ -4,7 +4,7 @@ import { PostData } from "../App";
 
 interface ViewPostProps {
     newPostData: PostData;
-    onPostChange: () => void;
+    onPostChange: (idx: number) => void;
 }
 
 const ViewPost = (props: ViewPostProps) => {
@@ -13,7 +13,7 @@ const ViewPost = (props: ViewPostProps) => {
 
     return (
         <div className="flex justify-center items-center h-full bg-gray-500">
-            <div className="min-w-[300px] py-10 px-4 w-full min-h-[300px] bg-slate-100 m-16 rounded-lg">
+            <div className="py-10 px-4 w-full min-h-[300px] bg-slate-100 m-16 rounded-lg">
                 <div className="flex gap-4 h-full min-h-[300px]">
                     <img
                         src={threadsData.profilePicture ?? ""}
@@ -39,21 +39,24 @@ const ViewPost = (props: ViewPostProps) => {
                             )}
                         </p>
                         {newPostData.media_type === "IMAGE" &&
-                            newPostData.media_url !== null && (
-                                <div className="flex justify-start gap-4 mb-4 border-2 relative border-black rounded-lg w-max">
-                                    <p
-                                        className="text-2xl font-bold absolute right-2 text-red-700 cursor-pointer bg-red-200 hover:bg-red-400 rounded-sm p-2"
-                                        onClick={() => onPostChange()}
-                                    >
-                                        X
-                                    </p>
-                                    <img
-                                        src={newPostData.media_url?.[0] ?? ""}
-                                        alt="Media Preview"
-                                        className="w-full h-full max-h-[300px]" // 16:9 Aspect Ratio
-                                    />
+                            newPostData.media_url !== null &&
+                            newPostData.media_url.map((url, idx) => (
+                                <div className="flex justify-start ml-4 items-center gap-10 lg:max-w-[400px] overflow-x-auto">
+                                    <div className="flex justify-start gap-4 mb-4 border-2 relative min-w-[200px] border-black rounded-lg flex-shrink-0">
+                                        <p
+                                            className="text-2xl font-bold absolute right-2 text-red-700 cursor-pointer bg-red-200 hover:bg-red-400 rounded-sm p-2"
+                                            onClick={() => onPostChange(idx)}
+                                        >
+                                            X
+                                        </p>
+                                        <img
+                                            src={url ?? ""}
+                                            alt="Media Preview"
+                                            className="w-[200px] h-[300px] object-contain" // 16:9 Aspect Ratio
+                                        />
+                                    </div>
                                 </div>
-                            )}
+                            ))}
                     </div>
                 </div>
                 <div className="flex justify-between items-center ml-4">

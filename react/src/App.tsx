@@ -22,10 +22,12 @@ export const App = () => {
     });
     const [mediaUpload, setMediaUpload] = useState<File | null>(null);
 
-    const onImageRemove = () => {
+    const onImageRemove = (idx: number) => {
         setNewPostData((prevState) => ({
             ...prevState,
-            media_url: null,
+            media_url: prevState.media_url
+                ? prevState.media_url.filter((_, i) => i !== idx)
+                : null,
             media_type: "TEXT",
         }));
         setMediaUpload(null);
