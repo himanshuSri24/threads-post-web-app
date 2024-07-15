@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ThreadsContext } from "../providers/ContextProvider";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
@@ -8,6 +8,7 @@ import { storage } from "../utils/FirebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
 import { PostData } from "../App";
+import Loading from "./Loading";
 
 const schema = z.object({
     description: z
@@ -27,6 +28,7 @@ interface CreatePostProps {
 const CreatePost = (props: CreatePostProps) => {
     const { onPostChange, newPostData, mediaUpload, setMediaUpload } = props;
     const { threadsData } = useContext(ThreadsContext);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const {
         control,
         handleSubmit,
@@ -71,6 +73,7 @@ const CreatePost = (props: CreatePostProps) => {
         if (mediaUpload !== null) {
             const uploadImageAndSetUrl = async () => {
                 try {
+                    setIsLoading(true);
                     const fileRef = ref(
                         storage,
                         `media/${mediaUpload.name} - ${uuidv4()}`
@@ -92,6 +95,8 @@ const CreatePost = (props: CreatePostProps) => {
                     setMediaUpload(null);
                 } catch (error) {
                     console.error("Error uploading file:", error);
+                } finally {
+                    setIsLoading(false);
                 }
             };
 
@@ -166,7 +171,7 @@ const CreatePost = (props: CreatePostProps) => {
                     {/* Button to trigger file input */}
                     <label
                         htmlFor="upload-image-input"
-                        className={`border-2 border-black font-bold py-2 px-4 rounded-lg  ${
+                        className={`border-2 border-black font-bold  flex gap-4 items-center min-h-[50px] py-2 px-4 rounded-lg  ${
                             newPostData.media_url !== null
                                 ? "cursor-not-allowed bg-gray-400 text-gray-800"
                                 : "cursor-pointer bg-blue-200"
@@ -174,7 +179,10 @@ const CreatePost = (props: CreatePostProps) => {
                     >
                         {newPostData.media_url !== null
                             ? "Image Uploaded"
+                            : isLoading
+                            ? "Uploading ..."
                             : "Upload Image"}
+                        {isLoading && <Loading />}
                     </label>
                 </div>
 

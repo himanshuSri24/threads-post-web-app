@@ -42,7 +42,7 @@ const ViewPost = (props: ViewPostProps) => {
                             newPostData.media_url !== null && (
                                 <div className="flex justify-start gap-4 mb-4 border-2 relative border-black rounded-lg w-max">
                                     <p
-                                        className="text-2xl font-bold absolute right-2 text-red-700 cursor-pointer"
+                                        className="text-2xl font-bold absolute right-2 text-red-700 cursor-pointer bg-red-200 hover:bg-red-400 rounded-sm p-2"
                                         onClick={() => onPostChange()}
                                     >
                                         X
