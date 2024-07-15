@@ -4,11 +4,14 @@ import ViewPost from "./components/ViewPost";
 import InitAccessToken from "./components/InitAccessToken";
 import { ThreadsContext } from "./providers/ContextProvider";
 
+export interface MediaUrl {
+    url: string;
+    type: string;
+}
 export interface PostData {
     text: string | null;
     is_carousel_item: boolean;
-    media_type: string;
-    media_url: string[] | null;
+    media: MediaUrl[] | null;
 }
 
 export const App = () => {
@@ -17,18 +20,17 @@ export const App = () => {
     const [newPostData, setNewPostData] = useState<PostData>({
         text: "",
         is_carousel_item: false,
-        media_type: "TEXT",
-        media_url: null,
+        media: null,
     });
     const [mediaUpload, setMediaUpload] = useState<File | null>(null);
 
     const onImageRemove = (idx: number) => {
+        console.log(idx);
         setNewPostData((prevState) => ({
             ...prevState,
-            media_url: prevState.media_url
-                ? prevState.media_url.filter((_, i) => i !== idx)
+            media: prevState.media
+                ? prevState.media.filter((_, i) => i !== idx)
                 : null,
-            media_type: "TEXT",
         }));
         setMediaUpload(null);
     };

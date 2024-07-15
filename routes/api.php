@@ -14,4 +14,6 @@ Route::get('/greet', function () {
 
 // Threads Routes
 Route::post('/threads/get-user', [ThreadsController::class, 'getUser'])->name('threads.getUser');
-Route::post('/threads/post-thread', [ThreadsController::class, 'postThread'])->name('threads.postThread');
+Route::post('/threads/create-post-object', [ThreadsController::class, 'createPostObject'])->name('threads.createPostObject');
+Route::post('/threads/create-carousel-container', [ThreadsController::class, 'createCarouselContainer'])->name('threads.createCarouselContainer');
+Route::post('/threads/create-post', [ThreadsController::class, 'createPost'])->name('threads.createPost');

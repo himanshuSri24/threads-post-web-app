@@ -38,25 +38,41 @@ const ViewPost = (props: ViewPostProps) => {
                                 "Start a thread..."
                             )}
                         </p>
-                        {newPostData.media_type === "IMAGE" &&
-                            newPostData.media_url !== null &&
-                            newPostData.media_url.map((url, idx) => (
-                                <div className="flex justify-start ml-4 items-center gap-10 lg:max-w-[400px] overflow-x-auto">
-                                    <div className="flex justify-start gap-4 mb-4 border-2 relative min-w-[200px] border-black rounded-lg flex-shrink-0">
+                        {newPostData.media !== null && (
+                            <div className="flex justify-start ml-4 items-center gap-10 lg:max-w-[400px] overflow-x-auto">
+                                {newPostData.media.map((media, idx) => (
+                                    <div
+                                        className="flex justify-start gap-4 mb-4 border-2 relative min-w-[200px] border-black rounded-lg flex-shrink-0"
+                                        key={media.url}
+                                    >
                                         <p
-                                            className="text-2xl font-bold absolute right-2 text-red-700 cursor-pointer bg-red-200 hover:bg-red-400 rounded-sm p-2"
-                                            onClick={() => onPostChange(idx)}
+                                            className="text-2xl font-bold absolute right-2 text-red-700 cursor-pointer bg-red-200 hover:bg-red-400 rounded-sm p-2 z-10"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onPostChange(idx);
+                                            }}
                                         >
                                             X
                                         </p>
-                                        <img
-                                            src={url ?? ""}
-                                            alt="Media Preview"
-                                            className="w-[200px] h-[300px] object-contain" // 16:9 Aspect Ratio
-                                        />
+                                        {media.type === "IMAGE" ? (
+                                            <img
+                                                src={media.url ?? ""}
+                                                alt="Media Preview"
+                                                className="w-[200px] h-[300px] object-contain" // 16:9 Aspect Ratio
+                                            />
+                                        ) : (
+                                            <video
+                                                src={media.url ?? ""}
+                                                autoPlay={true}
+                                                loop={true}
+                                                muted={true}
+                                                className="w-[200px] h-[300px] object-contain" // 16:9 Aspect Ratio
+                                            />
+                                        )}
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="flex justify-between items-center ml-4">
@@ -64,7 +80,7 @@ const ViewPost = (props: ViewPostProps) => {
                         Anyone can reply and quote
                     </p>
                     <button
-                        type="submit"
+                        disabled={true}
                         className="font-bold py-2 px-4 border-2 border-gray-400 rounded-lg text-gray-400"
                     >
                         Post Now

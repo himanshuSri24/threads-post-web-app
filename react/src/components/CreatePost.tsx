@@ -29,6 +29,7 @@ const CreatePost = (props: CreatePostProps) => {
     const { onPostChange, newPostData, mediaUpload, setMediaUpload } = props;
     const { threadsData } = useContext(ThreadsContext);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isPosting, setIsPosting] = useState<boolean>(false);
     const {
         control,
         handleSubmit,
@@ -40,38 +41,128 @@ const CreatePost = (props: CreatePostProps) => {
 
     const onSubmit = async (data: FormData) => {
         console.log(data.description);
-        try {
-            const response = await axiosInstance.post(
-                "/api/threads/post-thread",
-                {
-                    ...newPostData,
-                    media_url: newPostData.media_url?.[0] ?? null,
-                    text: data.description,
-                    access_token: threadsData.accessToken,
-                    user_id: threadsData.userId,
-                }
-            );
+        setIsPosting(true);
 
-            console.log(response.data.id);
+        // Post can be of two types:
+        // 1. Single Image / No Images
+        // 2. Multiple Images
 
-            onPostChange({
-                text: "",
-                is_carousel_item: false,
-                media_type: "TEXT",
-                media_url: null,
-            });
-            setMediaUpload(null);
-            reset();
-            alert("Posted Successfully");
-        } catch (error) {
-            console.log(error);
-            alert("Error Posting");
+        if (newPostData.media !== null && newPostData.media.length >= 2) {
+            // Multiple Images
+
+            try {
+                // call the API to post the thread for each image
+                const promises = newPostData.media!.map(async (media) => {
+                    const response = await axiosInstance.post(
+                        "/api/threads/create-post-object",
+                        {
+                            media_url: media.url,
+                            media_type: media.type,
+                            text: data.description,
+                            access_token: threadsData.accessToken,
+                            user_id: threadsData.userId,
+                        }
+                    );
+                    return response;
+                });
+
+                const responses = await Promise.allSettled(promises);
+
+                const carouselPostIDs = responses
+                    .filter((response) => response.status === "fulfilled")
+                    .map((response) => response.value.data.id);
+
+                console.log("MULTIPLE IMAGES", carouselPostIDs);
+
+                const carouselPostIDsCommaSeperated = carouselPostIDs.join(",");
+
+                const responseCreateContainer = await axiosInstance.post(
+                    "/api/threads/create-carousel-container",
+                    {
+                        text: data.description,
+                        access_token: threadsData.accessToken,
+                        user_id: threadsData.userId,
+                        carouselIDsCommaSeperated:
+                            carouselPostIDsCommaSeperated,
+                    }
+                );
+
+                const carouselPostID = responseCreateContainer.data.id;
+
+                const responseCreatePost = await axiosInstance.post(
+                    "/api/threads/create-post",
+                    {
+                        access_token: threadsData.accessToken,
+                        user_id: threadsData.userId,
+                        postId: carouselPostID,
+                    }
+                );
+
+                console.log("Response Created : ", responseCreatePost.data);
+
+                onPostChange({
+                    text: "",
+                    is_carousel_item: false,
+                    media: null,
+                });
+                setMediaUpload(null);
+                reset();
+                alert("Posted Successfully");
+            } catch (error) {
+                console.log(error);
+                alert("Error Posting");
+            } finally {
+                setIsPosting(false);
+            }
+        } else {
+            // Single Image / No Images
+            try {
+                console.log(newPostData.media);
+                const response = await axiosInstance.post(
+                    "/api/threads/create-post-object",
+                    {
+                        media_url: newPostData.media?.[0].url ?? null,
+                        media_type: newPostData.media?.[0].type ?? "TEXT",
+                        text: data.description,
+                        access_token: threadsData.accessToken,
+                        user_id: threadsData.userId,
+                        is_carousel_item: false,
+                    }
+                );
+
+                console.log(response.data.id);
+
+                const responseCreatePost = await axiosInstance.post(
+                    "/api/threads/create-post",
+                    {
+                        access_token: threadsData.accessToken,
+                        user_id: threadsData.userId,
+                        postId: response.data.id,
+                    }
+                );
+
+                console.log("Response Created : ", responseCreatePost.data);
+
+                onPostChange({
+                    text: "",
+                    is_carousel_item: false,
+                    media: null,
+                });
+                setMediaUpload(null);
+                reset();
+                alert("Posted Successfully");
+            } catch (error) {
+                console.log(error);
+                alert("Error Posting");
+            } finally {
+                setIsPosting(false);
+            }
         }
     };
 
     useEffect(() => {
         if (mediaUpload !== null) {
-            const uploadImageAndSetUrl = async () => {
+            const uploadMediaAndSetUrl = async () => {
                 try {
                     setIsLoading(true);
                     const fileRef = ref(
@@ -84,12 +175,18 @@ const CreatePost = (props: CreatePostProps) => {
                     console.log(downloadURL);
 
                     const newPostData = { ...props.newPostData };
-                    onPostChange({
-                        ...newPostData,
-                        media_url: [downloadURL],
-                        media_type: mediaUpload.type.includes("image")
+                    const newMedia = newPostData.media
+                        ? [...newPostData.media]
+                        : [];
+                    newMedia.push({
+                        url: downloadURL,
+                        type: mediaUpload.type.includes("image")
                             ? "IMAGE"
                             : "VIDEO",
+                    });
+                    onPostChange({
+                        ...newPostData,
+                        media: newMedia,
                     });
                     setMediaUpload(null);
                 } catch (error) {
@@ -99,7 +196,7 @@ const CreatePost = (props: CreatePostProps) => {
                 }
             };
 
-            uploadImageAndSetUrl();
+            uploadMediaAndSetUrl();
         }
     }, [mediaUpload, onPostChange, props.newPostData, setMediaUpload]);
 
@@ -124,6 +221,7 @@ const CreatePost = (props: CreatePostProps) => {
                     <Controller
                         name="description"
                         control={control}
+                        disabled={isPosting || isLoading}
                         defaultValue=""
                         render={({ field }) => (
                             <textarea
@@ -157,8 +255,20 @@ const CreatePost = (props: CreatePostProps) => {
                     {/* Hidden file input */}
                     <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*, video/*"
+                        disabled={
+                            isLoading ||
+                            isPosting ||
+                            (newPostData.media !== null &&
+                                newPostData.media.length == 10)
+                        }
                         onChange={(e) => {
+                            if (
+                                isLoading ||
+                                (newPostData.media !== null &&
+                                    newPostData.media.length == 10)
+                            )
+                                return;
                             const mediaToUpload = e.target.files?.[0] ?? null;
                             console.log(mediaToUpload, "mediaToUpload");
                             setMediaUpload(mediaToUpload);
@@ -171,29 +281,37 @@ const CreatePost = (props: CreatePostProps) => {
                     <label
                         htmlFor="upload-image-input"
                         className={`border-2 border-black font-bold  flex gap-4 items-center min-h-[50px] py-2 px-4 rounded-lg  ${
-                            newPostData.media_url !== null
+                            isLoading ||
+                            isPosting ||
+                            (newPostData.media !== null &&
+                                newPostData.media.length == 10)
                                 ? "cursor-not-allowed bg-gray-400 text-gray-800"
                                 : "cursor-pointer bg-blue-200"
                         }`}
                     >
-                        {newPostData.media_url !== null
-                            ? "Image Uploaded"
-                            : isLoading
+                        {isLoading
                             ? "Uploading ..."
-                            : "Upload Image"}
+                            : newPostData.media !== null &&
+                              newPostData.media.length == 10
+                            ? "Max Images Reached"
+                            : "Upload Media"}
                         {isLoading && <Loading />}
                     </label>
                 </div>
 
-                {/* TODO: Location */}
-                {/* TODO: Repeat Post */}
-
                 <div className="flex justify-start">
                     <button
+                        disabled={isPosting || isLoading}
                         type="submit"
                         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
                     >
-                        Post Now
+                        {isPosting ? (
+                            <div className="flex justify-center items-center gap-4 cursor-not-allowed">
+                                <span>Posting</span> <Loading />
+                            </div>
+                        ) : (
+                            "Post Now"
+                        )}
                     </button>
                 </div>
             </form>

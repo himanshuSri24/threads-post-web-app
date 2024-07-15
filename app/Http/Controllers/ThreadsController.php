@@ -44,7 +44,58 @@ class ThreadsController extends Controller
         return $threadData;
     }
 
-    public function postThread(Request $request)
+    public function createPost(Request $request) {
+        $access_token = $request->input('access_token');
+        $user_id = $request->input('user_id');
+        $postId = $request->input('postId');
+        $response = Http::post('https://graph.threads.net/v1.0/'.$user_id.'/threads_publish?creation_id='.$postId, [
+            'access_token' => $access_token,
+        ]);  
+
+        $final_data = $response->json();
+        return response()->json($final_data);
+    }
+
+    public function createCarouselContainer(Request $request) {
+        $access_token = $request->input('access_token');
+        $user_id = $request->input('user_id');
+        $text = $request->input('text');
+        $carouselIDsCommaSeperated = $request->input('carouselIDsCommaSeperated');
+
+        // https://graph.threads.net/v1.0/{{threads-user-id}}/threads?is_carousel_item=true&media_type=TEXT&text=Test-001
+
+        $response = null;
+        
+        $response = Http::post('https://graph.threads.net/v1.0/'.$user_id.'/threads?media_type=CAROUSEL&children='.$carouselIDsCommaSeperated.'&text='.$text, [ 
+            'access_token' => $access_token,
+        ]);
+        
+        $threadData = $response->json();
+        return response()->json($threadData);
+    }
+
+    public function createSingleCarouselPost($access_token, $user_id, $media_type, $media_url) {
+
+        // https://graph.threads.net/v1.0/{{threads-user-id}}/threads?is_carousel_item=true&media_type=TEXT&text=Test-001
+
+        $response = null;
+
+        if ($media_type === 'IMAGE') {
+            $response = Http::post('https://graph.threads.net/v1.0/'.$user_id.'/threads?is_carousel_item=true&media_type='.$media_type.'&image_url='.urlencode($media_url), [
+                'access_token' => $access_token,
+            ]);
+        } else if ($media_type === 'VIDEO') {
+            $response = Http::post('https://graph.threads.net/v1.0/'.$user_id.'/threads?is_carousel_item=true&media_type='.$media_type.'&video_url='.$media_url, [
+                'access_token' => $access_token,
+            ]);
+        }
+
+        $threadData = $response->json();
+        Log::info('Thread Data: '.json_encode($threadData));
+        return $threadData;
+    }
+
+    public function createPostObject(Request $request)
     {
         $access_token = $request->input('access_token');
         $user_id = $request->input('user_id');
@@ -57,21 +108,11 @@ class ThreadsController extends Controller
         if (!$is_carousel_item) {
             $threadData = ThreadsController::createSinglePost($access_token, $user_id, $text, $media_type, $media_url);
         
-        // https://graph.threads.net/v1.0/{{threads-user-id}}/threads?media_type=TEXT&text=Test-001
-
-            $postId = $threadData['id'];
-
-            // https://graph.threads.net/v1.0/{{threads-user-id}}/threads_publish?creation_id=17983446647700941&access_token={{access_token}}
-            $response = Http::post('https://graph.threads.net/v1.0/'.$user_id.'/threads_publish?creation_id='.$postId, [
-                'access_token' => $access_token,
-            ]);  
-
-            $final_data = $response->json();
-            return response()->json($final_data);
+            // https://graph.threads.net/v1.0/{{threads-user-id}}/threads?media_type=TEXT&text=Test-001
+            return response()->json($threadData);
         } else if ($is_carousel_item) {
-            return response()->json([
-                'message'=> 'Error: Carousel Item not supported yet',
-            ]);
+            $threadData = ThreadsController::createSingleCarouselPost($access_token, $user_id, $media_type, $media_url);
+            return response()->json($threadData);
         }
     }
 }

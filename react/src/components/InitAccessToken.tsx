@@ -2,16 +2,19 @@ import { useState } from "react";
 import axiosInstance from "../utils/AxiosConfig";
 import { useContext } from "react";
 import { ThreadsContext } from "../providers/ContextProvider";
+import Loading from "./Loading";
 
 const InitAccessToken = () => {
     const [accessToken, setAccessToken] = useState<string>("");
     const [isTokenValid, setIsTokenValid] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const { threadsData, setThreadsData } = useContext(ThreadsContext);
 
     const onConnectAccount = async () => {
         if (accessToken !== "") {
             try {
+                setIsLoading(true);
                 const response = await axiosInstance.post(
                     "/api/threads/get-user",
                     {
@@ -30,6 +33,7 @@ const InitAccessToken = () => {
                 throw error;
             } finally {
                 setAccessToken("");
+                setIsLoading(false);
             }
         } else {
             // TODO: Alert
@@ -81,9 +85,17 @@ const InitAccessToken = () => {
                         : onDisconnectAccount
                 }
             >
-                {!(threadsData.accessToken !== null || isTokenValid)
-                    ? "Connect Account"
-                    : "Account Connected. Click to Disconnect Account"}
+                {!(threadsData.accessToken !== null || isTokenValid) ? (
+                    isLoading ? (
+                        <div className="flex justify-center items-center gap-4 cursor-not-allowed">
+                            <span>Connecting Account</span> <Loading />
+                        </div>
+                    ) : (
+                        "Connect Account"
+                    )
+                ) : (
+                    "Account Connected. Click to Disconnect Account"
+                )}
             </button>
         </div>
     );
